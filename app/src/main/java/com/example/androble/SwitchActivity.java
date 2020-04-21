@@ -50,9 +50,11 @@ public class SwitchActivity extends AppCompatActivity implements CompoundButton.
     public static final String TAG_BIKEMERK = "bikeMerk";
     public static final String TAG_ID = "id";
     public static final String TAG_IDMOTOR = "idMotor";
+    public static final String TAG_CHECKIN = "check_in";
 
 
-    String noPlate, bikeType, bikeMerk;
+
+    String noPlate, bikeType, bikeMerk, check_in;
 
     public static final String my_shared_preferences = "my_shared_preferences";
     private String id, idMotor;
@@ -82,12 +84,12 @@ public class SwitchActivity extends AppCompatActivity implements CompoundButton.
                 if (v.getId() == R.id.checkoutButton) {
                     sharedpreferences = getSharedPreferences(my_shared_preferences, Context.MODE_PRIVATE);
                     SharedPreferences.Editor editor = sharedpreferences.edit();
-                    editor.remove("noPlate");
+                    editor.remove("check_in");
                     editor.commit();
                     sendCheckout(noPlate);
                     checkOutBT();
                     //deleteBooking();
-                    Toast.makeText(SwitchActivity.this, noPlate, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SwitchActivity.this, check_in, Toast.LENGTH_SHORT).show();
                     finish();
                     Intent i = new Intent(SwitchActivity.this, ChooseVehicle.class);
                     startActivity(i);
@@ -198,7 +200,7 @@ public class SwitchActivity extends AppCompatActivity implements CompoundButton.
         sharedpreferences = getSharedPreferences(my_shared_preferences, Context.MODE_PRIVATE);
         idMotor = sharedpreferences.getString(TAG_IDMOTOR, null);
         id = sharedpreferences.getString(TAG_ID, null);
-        String dataBLE = idMotor + ":TO:" + id ;
+        String dataBLE = idMotor + ":TurnOnMotor:" + id ;
         byte[] dataBT = dataBLE.getBytes(Charset.forName("UTF-8"));
 
         AdvertiseSettings settings = new AdvertiseSettings.Builder()
@@ -242,7 +244,7 @@ public class SwitchActivity extends AppCompatActivity implements CompoundButton.
         sharedpreferences = getSharedPreferences(my_shared_preferences, Context.MODE_PRIVATE);
         idMotor = sharedpreferences.getString(TAG_IDMOTOR, null);
         id = sharedpreferences.getString(TAG_ID, null);
-        String dataBLE = idMotor + ":TF:" + id;
+        String dataBLE = idMotor + ":TurnOffMoto:" + id;
         byte[] dataBT = dataBLE.getBytes(Charset.forName("UTF-8"));
 
         AdvertiseSettings settings = new AdvertiseSettings.Builder()
@@ -286,7 +288,7 @@ public class SwitchActivity extends AppCompatActivity implements CompoundButton.
         sharedpreferences = getSharedPreferences(my_shared_preferences, Context.MODE_PRIVATE);
         idMotor = sharedpreferences.getString(TAG_IDMOTOR, null);
         id = sharedpreferences.getString(TAG_ID, null);
-        String dataBLE = idMotor + ":CO:" + id;
+        String dataBLE = idMotor + ":CheckOutMoto:" + id;
         byte[] dataBT = dataBLE.getBytes(Charset.forName("UTF-8"));
 
         AdvertiseSettings settings = new AdvertiseSettings.Builder()

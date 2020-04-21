@@ -26,6 +26,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -80,7 +81,7 @@ public class ChooseVehicle extends AppCompatActivity {
     public static final String TAG_BIKEMERK = "bikeMerk";
     public static final String TAG_ID = "id";
     public static final String TAG_IDMOTOR = "idMotor";
-    public static final String TAG_CHECKIN = "0";
+    public static final String TAG_CHECKIN = "check_in";
 
 
 
@@ -139,38 +140,21 @@ public class ChooseVehicle extends AppCompatActivity {
                 //btn.setEnabled( true );
             }
         }
+        callVehicle();
+
         btn.setOnClickListener(new View.OnClickListener(){
 
             @Override
             public void onClick(View v){
                 //insertVehicle(GetBike, GetPlate, GetMerk);
                 if( v.getId() == R.id.buttonChoose && bluetoothAdapter.isEnabled()) {
-                    SaveDataMotor();
-                    idMotor(noPlate);
-                    idUser(email);
-//                    validationEnc(noPlate);
-//
-                   Handler handler = new Handler();
-////                    handler.postDelayed(new Runnable() {
-////                        public void run() {
-////
-////                        }
-////                    }, 7000);
-//                    while(check_in != "1"){
-//                        idUser(email);
-//                        validationEnc(noPlate);
-//                    }
                     pDialog = new ProgressDialog(ChooseVehicle.this);
                     pDialog.setCancelable(false);
                     pDialog.setMessage("Loading...");
                     showDialog();
-                    //Handler handler = new Handler();
-                    handler.postDelayed(new Runnable() {
-                        public void run() {
-                            Intent i = new Intent(ChooseVehicle.this,SwitchActivity.class);
-                            startActivity(i);
-                            hideDialog();                        }
-                    }, 7000);
+                    SaveDataMotor();
+                    idMotor(noPlate);
+                    idUser(email);
                 }
                 else if(v.getId() == R.id.buttonChoose && !bluetoothAdapter.isEnabled()){
                     final Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -184,39 +168,12 @@ public class ChooseVehicle extends AppCompatActivity {
 
         if (sessionBooking == true) {
             Intent intent = new Intent(ChooseVehicle.this, SwitchActivity.class);
-            intent.putExtra(TAG_NOPLATE, noPlate);
+            intent.putExtra(TAG_CHECKIN, check_in);
             finish();
             startActivity(intent);
         }
 
-//        spinner_motor.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-//
-//            @Override
-//            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-//                // TODO Auto-generated method stub
-//                GetBike = listVehicle.get(position).getBikeType().toString();
-//                GetPlate = listVehicle.get(position).getPlateNo().toString();
-//                GetMerk = listVehicle.get(position).getBikeMerk().toString();
-//                Toast.makeText(ChooseVehicle.this, GetPlate, Toast.LENGTH_SHORT).show();
-//                //txtPlate.setText(GetPlate.getText().toString());
-//                txt_hasil.setText("Kendaraan yang dipilih: ");
-//                txtPlate.setText("Plat Nomor: "+GetPlate);
-//                txtBike.setText("Tipe Motor: "+GetBike);
-//                txtMerk.setText("merkMotor: "+GetMerk);
-//
-//
-//
-//            }
-//            @Override
-//            public void onNothingSelected(AdapterView<?> parent) {
-//                // TODO Auto-generated method stub
-//            }
-//        });
 
-//        motoradapter = new MotorAdapter(ChooseVehicle.this, listVehicle);
-//        spinner_motor.setAdapter(motoradapter);
-
-        callVehicle();
         viewPager = findViewById(R.id.viewPager);
         adapter = new AdapterChooseVehicle(ChooseVehicle.this,vehicles);
         viewPager.setAdapter(adapter);
@@ -232,13 +189,11 @@ public class ChooseVehicle extends AppCompatActivity {
 
         colors = colors_temp;
 
-        viewPager.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
                 if (position < (adapter.getCount() -1) && position < (colors.length - 1)) {
                     viewPager.setBackgroundColor(
-
                             (Integer) argbEvaluator.evaluate(
                                     positionOffset,
                                     colors[position],
@@ -246,7 +201,6 @@ public class ChooseVehicle extends AppCompatActivity {
                             )
                     );
                 }
-
                 else {
                     viewPager.setBackgroundColor(colors[colors.length - 1]);
                 }
@@ -285,18 +239,16 @@ public class ChooseVehicle extends AppCompatActivity {
 
     public void sessionBooking(){
         sharedpreferences = getSharedPreferences(my_shared_preferences, Context.MODE_PRIVATE);
-        if (noPlate == null){
-            SharedPreferences.Editor editor = sharedpreferences.edit();
+//        if (noPlate == null){
+        if (check_in == null || check_in.equals("0")){
+        SharedPreferences.Editor editor = sharedpreferences.edit();
             editor.putBoolean(session_booking_status, false);
             sessionBooking = sharedpreferences.getBoolean(session_booking_status, false);
             editor.apply();
-
             Toast.makeText(this, "No Session Booking", Toast.LENGTH_SHORT).show();
-
-
         }else{
             sessionBooking = sharedpreferences.getBoolean(session_booking_status, false);
-            noPlate = sharedpreferences.getString(TAG_NOPLATE, null);
+            check_in = sharedpreferences.getString(TAG_CHECKIN, null);
         }
 
     }
@@ -369,9 +321,79 @@ public class ChooseVehicle extends AppCompatActivity {
         RequestQueue requestQueue= Volley.newRequestQueue(getApplicationContext());
         requestQueue.add(strReq);
     }
+    public void validationEnc(final String noPlate){
+        pDialog = new ProgressDialog(this);
+        pDialog.setCancelable(false);
+        showDialog();
+
+        StringRequest strReq = new StringRequest(Request.Method.POST, verifenc, new Response.Listener<String>() {
+
+            @Override
+            public void onResponse(String response) {
+                try{
+                    JSONArray jsonObj = new JSONArray(response);
+
+                    for(int i = 0 ; i<jsonObj.length();i++){
+                        JSONObject jsonObj1 = jsonObj.getJSONObject(i);
+                        check_in = jsonObj1.getString("check_in");
+                    }
+                    SharedPreferences sharedpreferences = getSharedPreferences(my_shared_preferences, Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedpreferences.edit();
+                    editor.putString(TAG_CHECKIN, check_in);
+                    editor.apply();
+                    editor.commit();
+                    Toast.makeText(ChooseVehicle.this, "check_in:" + check_in, Toast.LENGTH_SHORT).show();
+
+                }  catch (JSONException e){
+                    e.printStackTrace();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e(TAG, error.getLocalizedMessage());
+            }
+        }){
+            @Override
+            protected Map<String, String> getParams()  {
+                Map<String,String>parms= new HashMap<>();
+                parms.put("noPlate",noPlate);
+                return parms;
+            }
+        };
+        RequestQueue requestQueue= Volley.newRequestQueue(getApplicationContext());
+        requestQueue.add(strReq);
+    }
+
+    public void waitingProc(){
+        sharedpreferences = getSharedPreferences(my_shared_preferences, Context.MODE_PRIVATE);
+        check_in = sharedpreferences.getString(TAG_CHECKIN, null);
+
+        validationEnc(noPlate);
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                if(check_in.equals("1")){
+                    Toast.makeText(ChooseVehicle.this, "Validation complete" + check_in, Toast.LENGTH_SHORT).show();
+                    Intent i = new Intent(ChooseVehicle.this, SwitchActivity.class);
+                    startActivity(i);
+                    hideDialog();
+                } else if(check_in.equals("0")) {
+                    Toast.makeText(ChooseVehicle.this, "Validation uncomplete. Waiting." + check_in, Toast.LENGTH_SHORT).show();
+                   waitingProc();
+                }else{
+                    Toast.makeText(ChooseVehicle.this, "Error", Toast.LENGTH_SHORT).show();
+                }
+//                Intent i = new Intent(ChooseVehicle.this, SwitchActivity.class);
+//                startActivity(i);
+            }
+        }, 10000);
+
+    }
 
     public void idUser(final String email){
         pDialog = new ProgressDialog(this);
+        pDialog.setMessage("Loading. Please wait...");
         pDialog.setCancelable(false);
         showDialog();
 
@@ -396,16 +418,10 @@ public class ChooseVehicle extends AppCompatActivity {
 
 
                     encrypt(databluetooths);
-                    //decrypt();
                     splitData(encrypted);
                     insertBooking(email, noPlate, encrypted);
                     dataBLE();
-//                    Handler handler = new Handler();
-//                    handler.postDelayed(new Runnable() {
-//                        public void run() {
-//                            validationEnc(noPlate);                        }
-//                    }, 7000);
-
+                    waitingProc();
                 }  catch (JSONException e){
                     e.printStackTrace();
                 }
@@ -427,49 +443,7 @@ public class ChooseVehicle extends AppCompatActivity {
         requestQueue.add(strReq);
     }
 
-    public void validationEnc(final String noPlate){
-            pDialog = new ProgressDialog(this);
-            pDialog.setCancelable(false);
-            showDialog();
 
-            StringRequest strReq = new StringRequest(Request.Method.POST, verifenc, new Response.Listener<String>() {
-
-                @Override
-                public void onResponse(String response) {
-                    try{
-                        JSONArray jsonObj = new JSONArray(response);
-
-                        for(int i = 0 ; i<jsonObj.length();i++){
-                            JSONObject jsonObj1 = jsonObj.getJSONObject(i);
-                            check_in = jsonObj1.getString("check_in");
-                        }
-                        SharedPreferences sharedpreferences = getSharedPreferences(my_shared_preferences, Context.MODE_PRIVATE);
-                        SharedPreferences.Editor editor = sharedpreferences.edit();
-                        editor.putString(TAG_CHECKIN, check_in);
-                        editor.apply();
-                        editor.commit();
-                        Toast.makeText(ChooseVehicle.this, "check_in:" + check_in, Toast.LENGTH_SHORT).show();
-
-                    }  catch (JSONException e){
-                        e.printStackTrace();
-                    }
-                }
-            }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    Log.e(TAG, error.getLocalizedMessage());
-                }
-            }){
-                @Override
-                protected Map<String, String> getParams()  {
-                    Map<String,String>parms= new HashMap<>();
-                    parms.put("noPlate",noPlate);
-                    return parms;
-                }
-            };
-            RequestQueue requestQueue= Volley.newRequestQueue(getApplicationContext());
-            requestQueue.add(strReq);
-        }
 
     public void idMotor(final String noPlate){
         pDialog = new ProgressDialog(this);
@@ -525,8 +499,7 @@ public class ChooseVehicle extends AppCompatActivity {
         showDialog();
 
         // Creating volley request obj
-        JsonArrayRequest jArr = new JsonArrayRequest(url,
-                new Response.Listener<JSONArray>() {
+        JsonArrayRequest jArr = new JsonArrayRequest(Request.Method.GET, url, null, new Response.Listener<JSONArray>() {
                     @Override
                     public void onResponse(JSONArray response) {
                         Log.e(TAG, response.toString());
@@ -542,36 +515,42 @@ public class ChooseVehicle extends AppCompatActivity {
                                 item.setPlateNo(obj.getString(TAG_NOPLATE));
                                 item.setBikeType(obj.getString(TAG_BIKETYPE));
                                 item.setBikeMerk(obj.getString(TAG_BIKEMERK));
-
-
                                 vehicles.add(item);
+
+                                //SaveDataMotor();
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
                         }
-                        // notifying list adapter about data changes
-                        // so that it renders the list view with updated data
                         adapter.notifyDataSetChanged();
-
                         hideDialog();
                     }
                 }, new Response.ErrorListener() {
 
             @Override
             public void onErrorResponse(VolleyError error) {
+                NetworkResponse networkResponse = error.networkResponse;
+                if (networkResponse != null && networkResponse.data != null) {
+                    String jsonError = new String(networkResponse.data);
+                    VolleyLog.e(TAG, "Error: " + error.getMessage());
+                }
                 VolleyLog.e(TAG, "Error: " + error.getMessage());
                 Toast.makeText(ChooseVehicle.this, error.getMessage(), Toast.LENGTH_LONG).show();
                 hideDialog();
             }
         });
-
-        // Adding request to request queue
         AppController.getInstance().addToRequestQueue(jArr);
     }
-
     private void showDialog() {
-        if (!pDialog.isShowing())
-            pDialog.show();
+//        if (!pDialog.isShowing())
+//            pDialog.show();
+        if (pDialog == null) {
+            pDialog = new ProgressDialog(ChooseVehicle.this);
+            pDialog.setMessage("Loading. Please wait...");
+            pDialog.setIndeterminate(false);
+            pDialog.setCancelable(false);
+        }
+        pDialog.show();
     }
 
     private void hideDialog() {
@@ -614,7 +593,7 @@ public class ChooseVehicle extends AppCompatActivity {
         sharedpreferences = getSharedPreferences(my_shared_preferences, Context.MODE_PRIVATE);
         idMotor = sharedpreferences.getString(TAG_IDMOTOR, null);
         id = sharedpreferences.getString(TAG_ID, null);
-        databluetooths = idMotor + ":CheckOutMoto:" + id ;
+        databluetooths = idMotor + ":CheckInMotor:" + id ;
         Toast.makeText(ChooseVehicle.this, databluetooths, Toast.LENGTH_SHORT).show();
 
     }
@@ -643,7 +622,6 @@ public class ChooseVehicle extends AppCompatActivity {
         };
 
         while (c < 3){
-        //for(int c = 0 ; c <= splitdatas.size(); c++){
             final BluetoothLeAdvertiser advertiser = BluetoothAdapter.getDefaultAdapter().getBluetoothLeAdvertiser();
             byte[] dataBT = splitdatas.get(c).getBytes(Charset.forName("UTF-8"));
 

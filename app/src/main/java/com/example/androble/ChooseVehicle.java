@@ -117,6 +117,7 @@ public class ChooseVehicle extends AppCompatActivity {
     private static final byte[] keyValue =
             new byte[]{'t', 'a', 'n', 'd', 'e', 'b', 'i', 'k', 'e', 's', 'k', 'r', 'i', 'p', 's', 'i'};
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -150,7 +151,7 @@ public class ChooseVehicle extends AppCompatActivity {
                 if( v.getId() == R.id.buttonChoose && bluetoothAdapter.isEnabled()) {
                     pDialog = new ProgressDialog(ChooseVehicle.this);
                     pDialog.setCancelable(false);
-                    pDialog.setMessage("Loading...");
+                    pDialog.setMessage("Loading. Please wait...");
                     showDialog();
                     SaveDataMotor();
                     idMotor(noPlate);
@@ -283,10 +284,6 @@ public class ChooseVehicle extends AppCompatActivity {
     }
 
     public void insertBooking(final String email, final String noPlate, final String dataBLEaja){
-        pDialog = new ProgressDialog(this);
-        pDialog.setCancelable(false);
-        pDialog.setMessage("Register ...");
-        showDialog();
         mHandler.postDelayed(new Runnable() {
             public void run() {
                 Toast.makeText(ChooseVehicle.this, "bleaja:" + dataBLEaja, Toast.LENGTH_SHORT).show();
@@ -322,10 +319,6 @@ public class ChooseVehicle extends AppCompatActivity {
         requestQueue.add(strReq);
     }
     public void validationEnc(final String noPlate){
-        pDialog = new ProgressDialog(this);
-        pDialog.setCancelable(false);
-        showDialog();
-
         StringRequest strReq = new StringRequest(Request.Method.POST, verifenc, new Response.Listener<String>() {
 
             @Override
@@ -367,7 +360,7 @@ public class ChooseVehicle extends AppCompatActivity {
 
     public void waitingProc(){
         sharedpreferences = getSharedPreferences(my_shared_preferences, Context.MODE_PRIVATE);
-        check_in = sharedpreferences.getString(TAG_CHECKIN, null);
+       check_in = sharedpreferences.getString(TAG_CHECKIN, null);
 
         validationEnc(noPlate);
         Handler handler = new Handler();
@@ -380,7 +373,7 @@ public class ChooseVehicle extends AppCompatActivity {
                     hideDialog();
                 } else if(check_in.equals("0")) {
                     Toast.makeText(ChooseVehicle.this, "Validation uncomplete. Waiting." + check_in, Toast.LENGTH_SHORT).show();
-                   waitingProc();
+                    waitingProc();
                 }else{
                     Toast.makeText(ChooseVehicle.this, "Error", Toast.LENGTH_SHORT).show();
                 }
@@ -388,15 +381,27 @@ public class ChooseVehicle extends AppCompatActivity {
 //                startActivity(i);
             }
         }, 10000);
+        sharedpreferences = getSharedPreferences(my_shared_preferences, Context.MODE_PRIVATE);
+        check_in = sharedpreferences.getString(TAG_CHECKIN, null);
 
+//        validationEnc(noPlate);
+//        for(int x = 0; x<=7; x++){
+//            if(check_in.equals("1")){
+//                Toast.makeText(ChooseVehicle.this, "Validation complete" + check_in, Toast.LENGTH_SHORT).show();
+//                Intent i = new Intent(ChooseVehicle.this, SwitchActivity.class);
+//                startActivity(i);
+//                hideDialog();
+//                break;
+//            } else if(check_in.equals("0")) {
+//                Toast.makeText(ChooseVehicle.this, "Validation uncomplete. Waiting." + check_in, Toast.LENGTH_SHORT).show();
+//                waitingProc();
+//            }else{
+//                Toast.makeText(ChooseVehicle.this, "Error", Toast.LENGTH_SHORT).show();
+//            }
+//        }
     }
 
     public void idUser(final String email){
-        pDialog = new ProgressDialog(this);
-        pDialog.setMessage("Loading. Please wait...");
-        pDialog.setCancelable(false);
-        showDialog();
-
         StringRequest strReq = new StringRequest(Request.Method.POST, user, new Response.Listener<String>() {
 
             @Override
@@ -414,8 +419,6 @@ public class ChooseVehicle extends AppCompatActivity {
                     editor.apply();
                     editor.commit();
                     dataBluetooth();
-
-
 
                     encrypt(databluetooths);
                     splitData(encrypted);
@@ -446,10 +449,6 @@ public class ChooseVehicle extends AppCompatActivity {
 
 
     public void idMotor(final String noPlate){
-        pDialog = new ProgressDialog(this);
-        pDialog.setCancelable(false);
-        showDialog();
-
         StringRequest strReq = new StringRequest(Request.Method.POST, motor, new Response.Listener<String>() {
 
             @Override
@@ -495,7 +494,7 @@ public class ChooseVehicle extends AppCompatActivity {
 
         pDialog = new ProgressDialog(ChooseVehicle.this);
         pDialog.setCancelable(false);
-        pDialog.setMessage("Loading...");
+        pDialog.setMessage("Loading. Please wait...");
         showDialog();
 
         // Creating volley request obj
@@ -542,24 +541,14 @@ public class ChooseVehicle extends AppCompatActivity {
         AppController.getInstance().addToRequestQueue(jArr);
     }
     private void showDialog() {
-//        if (!pDialog.isShowing())
-//            pDialog.show();
-        if (pDialog == null) {
-            pDialog = new ProgressDialog(ChooseVehicle.this);
-            pDialog.setMessage("Loading. Please wait...");
-            pDialog.setIndeterminate(false);
-            pDialog.setCancelable(false);
-        }
-        pDialog.show();
+        if (!pDialog.isShowing())
+            pDialog.show();
     }
 
     private void hideDialog() {
         if (pDialog.isShowing())
             pDialog.dismiss();
     }
-
-
-
     private ScanCallback mScanCallback = new ScanCallback() {
 
         @Override
@@ -588,17 +577,13 @@ public class ChooseVehicle extends AppCompatActivity {
             super.onScanFailed(errorCode);
         }
     };
-
     private void dataBluetooth(){
         sharedpreferences = getSharedPreferences(my_shared_preferences, Context.MODE_PRIVATE);
         idMotor = sharedpreferences.getString(TAG_IDMOTOR, null);
         id = sharedpreferences.getString(TAG_ID, null);
         databluetooths = idMotor + ":CheckInMotor:" + id ;
         Toast.makeText(ChooseVehicle.this, databluetooths, Toast.LENGTH_SHORT).show();
-
     }
-
-
     private void dataBLE() {
         AdvertiseSettings settings = new AdvertiseSettings.Builder()
                 .setAdvertiseMode( AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
